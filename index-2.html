@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hantar Kad Ikrar · HEAR ME Malaysia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== Tetapan — tukar di sini sahaja ===== */
+  /* Nama program & URL Apps Script ada dalam <script> di bawah (CONFIG) */
+
+  :root {
+    --navy: #13234A;
+    --navy-soft: #24386A;
+    --gold: #C49A3A;
+    --gold-pale: #F3E7C6;
+    --paper: #F6F7FB;
+    --ink: #1A1F2E;
+    --muted: #5B6377;
+    --line: #D6DAE6;
+    --danger: #A4262C;
+    --ok: #1F6F4A;
+    --surface: #FFFFFF;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0E1630;
+      --surface: #16214A;
+      --ink: #EEF0F7;
+      --muted: #A9B0C6;
+      --line: #2E3C6B;
+      --gold-pale: #3A3220;
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 1.0625rem/1.6 "Source Sans 3", "Segoe UI", Roboto, Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 2.25rem 1.25rem 3.75rem;
+    text-align: center;
+  }
+  header .org { font-size: .95rem; color: var(--gold-pale); margin: 0 0 .5rem; }
+  @media (prefers-color-scheme: dark) { header .org { color: #E8D7A6; } }
+  header h1 {
+    font: 700 clamp(2rem, 7vw, 2.75rem)/1.1 "Playfair Display", Georgia, serif;
+    margin: 0;
+  }
+  header .prog { margin: .6rem 0 0; font-size: 1rem; opacity: .85; }
+
+  main {
+    max-width: 34rem;
+    margin: -2.25rem auto 3rem;
+    padding: 0 1rem;
+  }
+
+  .sheet {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 1.5rem 1.25rem 1.75rem;
+    border: 1px solid var(--line);
+  }
+
+  .note {
+    margin: 0 0 1.5rem;
+    color: var(--muted);
+    font-size: .98rem;
+  }
+
+  label.field { display: block; margin-bottom: 1.15rem; }
+  label.field span { display: block; font-weight: 600; margin-bottom: .35rem; }
+  label.field small { font-weight: 400; color: var(--muted); }
+  input[type="text"], input[type="tel"] {
+    width: 100%;
+    font: inherit;
+    padding: .75rem .9rem;
+    border: 1.5px solid var(--line);
+    border-radius: 9px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  input:focus-visible, button:focus-visible, .drop:focus-within {
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* Kad — elemen utama: bingkai emas berganda seperti sijil ikrar */
+  .card-label { font-weight: 600; margin-bottom: .35rem; display: block; }
+  .drop {
+    position: relative;
+    display: block;
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    padding: 7px;
+    cursor: pointer;
+    background: var(--surface);
+  }
+  .drop-inner {
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    min-height: 13rem;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 1.25rem;
+    background: var(--gold-pale);
+  }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop .big {
+    font: 500 italic 1.4rem/1.3 "Playfair Display", Georgia, serif;
+    color: var(--navy);
+    margin: 0 0 .35rem;
+  }
+  @media (prefers-color-scheme: dark) { .drop .big { color: #F1E4BF; } }
+  .drop .small { margin: 0; color: var(--muted); font-size: .92rem; }
+  .drop img { max-width: 100%; max-height: 22rem; display: block; border-radius: 2px; }
+  .pdf-chip {
+    font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: .6rem .9rem;
+    border-radius: 8px;
+    word-break: break-all;
+  }
+  .change { margin-top: .5rem; font-size: .9rem; color: var(--muted); text-align: center; }
+
+  button.send {
+    width: 100%;
+    margin-top: 1.5rem;
+    font: 700 1.1rem/1 "Source Sans 3", sans-serif;
+    padding: 1rem;
+    border: 0;
+    border-radius: 10px;
+    background: var(--navy);
+    color: #fff;
+    cursor: pointer;
+  }
+  @media (prefers-color-scheme: dark) { button.send { background: var(--gold); color: #13234A; } }
+  button.send[disabled] { opacity: .6; cursor: progress; }
+
+  .msg { margin-top: 1rem; font-weight: 600; }
+  .msg.err { color: var(--danger); }
+  @media (prefers-color-scheme: dark) { .msg.err { color: #FF9A9F; } }
+
+  .done { text-align: center; padding: 1rem 0 .5rem; }
+  .done h2 {
+    font: 700 1.9rem/1.2 "Playfair Display", Georgia, serif;
+    margin: 0 0 .5rem;
+    color: var(--navy);
+  }
+  @media (prefers-color-scheme: dark) { .done h2 { color: #F1E4BF; } }
+  .done .seal {
+    width: 4.5rem; height: 4.5rem; margin: 0 auto 1rem;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: grid; place-items: center;
+    font-size: 2rem; color: var(--gold);
+  }
+  .done button {
+    margin-top: 1.25rem;
+    font: 600 1rem "Source Sans 3", sans-serif;
+    background: none; border: 1.5px solid var(--line); color: var(--ink);
+    padding: .7rem 1.2rem; border-radius: 9px; cursor: pointer;
+  }
+
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 1rem 2rem; }
+  .hidden { display: none !important; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .done .seal { animation: pop .45s ease-out; }
+    @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="org">HEAR ME Malaysia</p>
+  <h1>Kad Ikrar Saya</h1>
+  <p class="prog" id="progName"></p>
+</header>
+
+<main>
+  <div class="sheet">
+
+    <form id="form" novalidate>
+      <p class="note">Ambil gambar kad ikrar anda dan hantar di sini. Kad anda hanya dilihat oleh urus setia HEAR ME.</p>
+
+      <label class="field">
+        <span>Nama penuh</span>
+        <input type="text" id="nama" autocomplete="name" required>
+      </label>
+
+      <label class="field">
+        <span>No. telefon <small>(pilihan)</small></span>
+        <input type="tel" id="telefon" autocomplete="tel" inputmode="tel">
+      </label>
+
+      <span class="card-label">Kad ikrar</span>
+      <label class="drop" id="drop">
+        <input type="file" id="fail" accept="image/*,application/pdf" aria-label="Pilih gambar atau PDF kad ikrar">
+        <div class="drop-inner" id="preview">
+          <div>
+            <p class="big">Tekan untuk ambil gambar</p>
+            <p class="small">atau pilih fail dari telefon · JPG, PNG atau PDF</p>
+          </div>
+        </div>
+      </label>
+      <p class="change hidden" id="changeHint">Tekan kad untuk tukar fail.</p>
+
+      <button type="submit" class="send" id="btn">Hantar kad ikrar</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+
+    <div class="done hidden" id="done">
+      <div class="seal" aria-hidden="true">✓</div>
+      <h2>Kad ikrar dihantar</h2>
+      <p id="doneText"></p>
+      <button type="button" id="again">Hantar untuk peserta lain</button>
+    </div>
+
+  </div>
+</main>
+
+<footer>Persatuan Ibu Bapa Anak Masalah Pendengaran Malaysia (HEAR ME)</footer>
+
+<script>
+  /* ===================== CONFIG ===================== */
+  const CONFIG = {
+    PROGRAM: "HEAR ME RISING 2026",
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwWCTTqTmWnkYljLdOTukafrxtIQKqdniIi8kEIMHIfgYvUwYTaAhBT4eyhNcGbAbTwPA/exec",
+    MAX_PDF_MB: 8,
+    MAX_IMG_PX: 1800                              // gambar dikecilkan supaya cepat dihantar
+  };
+  /* ================================================== */
+
+  const $ = id => document.getElementById(id);
+  $("progName").textContent = CONFIG.PROGRAM;
+
+  let payloadFile = null; // { data, mimeType, ext }
+
+  $("fail").addEventListener("change", async e => {
+    const f = e.target.files[0];
+    setMsg("");
+    payloadFile = null;
+    if (!f) return;
+
+    try {
+      if (f.type === "application/pdf") {
+        if (f.size > CONFIG.MAX_PDF_MB * 1024 * 1024) {
+          throw new Error(`PDF melebihi ${CONFIG.MAX_PDF_MB}MB. Hantar gambar kad sebagai ganti.`);
+        }
+        const data = await toBase64(f);
+        payloadFile = { data, mimeType: "application/pdf", ext: "pdf" };
+        $("preview").innerHTML = `<span class="pdf-chip">📄 ${escapeHtml(f.name)}</span>`;
+      } else if (f.type.startsWith("image/")) {
+        const dataUrl = await shrinkImage(f, CONFIG.MAX_IMG_PX);
+        payloadFile = { data: dataUrl.split(",")[1], mimeType: "image/jpeg", ext: "jpg" };
+        $("preview").innerHTML = `<img src="${dataUrl}" alt="Pratonton kad ikrar">`;
+      } else {
+        throw new Error("Fail ini tidak disokong. Pilih gambar (JPG/PNG) atau PDF.");
+      }
+      $("changeHint").classList.remove("hidden");
+    } catch (err) {
+      e.target.value = "";
+      setMsg(err.message, true);
+    }
+  });
+
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const nama = $("nama").value.trim();
+    if (!nama) return setMsg("Isi nama penuh anda.", true), $("nama").focus();
+    if (!payloadFile) return setMsg("Pilih gambar kad ikrar dahulu.", true);
+    if (CONFIG.SCRIPT_URL.startsWith("PASTE")) return setMsg("URL Apps Script belum ditetapkan.", true);
+
+    const btn = $("btn");
+    btn.disabled = true;
+    btn.textContent = "Menghantar…";
+    setMsg("");
+
+    try {
+      const res = await fetch(CONFIG.SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          nama,
+          telefon: $("telefon").value.trim(),
+          program: CONFIG.PROGRAM,
+          ...payloadFile
+        })
+      });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || "Penghantaran gagal.");
+
+      $("form").classList.add("hidden");
+      $("doneText").textContent = `Terima kasih, ${nama}. Ikrar anda telah diterima.`;
+      $("done").classList.remove("hidden");
+    } catch (err) {
+      setMsg("Tidak berjaya dihantar. Semak internet dan tekan Hantar sekali lagi.", true);
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Hantar kad ikrar";
+    }
+  });
+
+  $("again").addEventListener("click", () => {
+    $("form").reset();
+    payloadFile = null;
+    $("preview").innerHTML = `<div><p class="big">Tekan untuk ambil gambar</p><p class="small">atau pilih fail dari telefon · JPG, PNG atau PDF</p></div>`;
+    $("changeHint").classList.add("hidden");
+    $("done").classList.add("hidden");
+    $("form").classList.remove("hidden");
+    $("nama").focus();
+  });
+
+  function setMsg(t, isErr) {
+    $("msg").textContent = t;
+    $("msg").className = "msg" + (isErr ? " err" : "");
+  }
+
+  function toBase64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(",")[1]);
+      r.onerror = () => rej(new Error("Fail tidak dapat dibaca."));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function shrinkImage(file, maxPx) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => rej(new Error("Gambar ini tidak dapat dibuka. Cuba ambil gambar semula."));
+      img.src = url;
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+</script>
+</body>
+</html>
